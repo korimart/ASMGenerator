@@ -1,4 +1,3 @@
-#pragma once
 #include "ASMGenerator.h"
 
 AddressManager* AddressManager::Instance = nullptr;
@@ -13,21 +12,11 @@ void ASMBlock::Assign(const std::string &varName, uint16_t value)
     mStatements.push_back(std::move(statement));
 }
 
-void ASMBlock::AssignAtAddress(uint16_t addr, uint16_t value)
+void ASMBlock::Assign(const std::string & varName, const std::string & op)
 {
 	auto statement = std::make_unique<Statement>();
-	statement->type = StatementType::AssignAtAddr;
-	statement->value = value;
-	statement->addr = addr;
-
-	mStatements.push_back(std::move(statement));
-}
-
-void ASMBlock::AssignAtAddress(const std::string& varName, uint16_t value)
-{
-	auto statement = std::make_unique<Statement>();
-	statement->type = StatementType::AssignAtAddrV;
-	statement->value = value;
+	statement->type = StatementType::AssignV;
+	statement->op1.str = op;
 	statement->targetName = varName;
 
 	mStatements.push_back(std::move(statement));
@@ -70,6 +59,72 @@ void ASMBlock::MultiplyAssign(const std::string& varName, const std::string& op1
 {
 	auto statement = std::make_unique<Statement>();
 	statement->type = StatementType::MultiplyAssignVV;
+	statement->targetName = varName;
+	statement->op1.str = op1;
+	statement->op2.str = op2;
+
+	mStatements.push_back(std::move(statement));
+}
+
+void ASMBlock::SubtractAssign(const std::string & varName, const std::string & op1, uint16_t op2)
+{
+	auto statement = std::make_unique<Statement>();
+	statement->type = StatementType::SubtractAssignVC;
+	statement->targetName = varName;
+	statement->op1.str = op1;
+	statement->op2.constant = op2;
+
+	mStatements.push_back(std::move(statement));
+}
+
+void ASMBlock::SubtractAssign(const std::string & varName, const std::string & op1, const std::string & op2)
+{
+	auto statement = std::make_unique<Statement>();
+	statement->type = StatementType::SubtractAssignVV;
+	statement->targetName = varName;
+	statement->op1.str = op1;
+	statement->op2.str = op2;
+
+	mStatements.push_back(std::move(statement));
+}
+
+void ASMBlock::BitwiseAndAssign(const std::string & varName, const std::string & op1, uint16_t op2)
+{
+	auto statement = std::make_unique<Statement>();
+	statement->type = StatementType::BitwiseAndAssignVC;
+	statement->targetName = varName;
+	statement->op1.str = op1;
+	statement->op2.constant = op2;
+
+	mStatements.push_back(std::move(statement));
+}
+
+void ASMBlock::BitwiseAndAssign(const std::string & varName, const std::string & op1, const std::string & op2)
+{
+	auto statement = std::make_unique<Statement>();
+	statement->type = StatementType::BitwiseAndAssignVV;
+	statement->targetName = varName;
+	statement->op1.str = op1;
+	statement->op2.str = op2;
+
+	mStatements.push_back(std::move(statement));
+}
+
+void ASMBlock::BitwiseOrAssign(const std::string & varName, const std::string & op1, uint16_t op2)
+{
+	auto statement = std::make_unique<Statement>();
+	statement->type = StatementType::BitwiseOrAssignVC;
+	statement->targetName = varName;
+	statement->op1.str = op1;
+	statement->op2.constant = op2;
+
+	mStatements.push_back(std::move(statement));
+}
+
+void ASMBlock::BitwiseOrAssign(const std::string & varName, const std::string & op1, const std::string & op2)
+{
+	auto statement = std::make_unique<Statement>();
+	statement->type = StatementType::BitwiseOrAssignVV;
 	statement->targetName = varName;
 	statement->op1.str = op1;
 	statement->op2.str = op2;
@@ -150,60 +205,68 @@ void ASMBlock::GetASM(std::stringstream &out)
     {
         switch (pStatement->type)
         {
-			case StatementType::Assign: case StatementType::AssignAtAddr:
+			case StatementType::Assign: case StatementType::AssignV:
 			{
-				uint16_t addr = 
-					pStatement->type == StatementType::Assign 
-					? pInstance->GetAddress(pStatement->targetName) : pStatement->addr;
-				out << "@" << pStatement->value << std::endl;
-				out << "D=A" << std::endl;
-				out << "@" << addr << std::endl;
-				out << "M=D" << std::endl;
-			}
-			break;
+				if (pStatement->type == StatementType::Assign)
+				{
+					out << "@" << pStatement->value << std::endl;
+					out << "D=A" << std::endl;
+				}
+				else
+				{
+					LoadAReg(out, pStatement->op1.str);
+					out << "D=M" << std::endl;
+				}
 
-			case StatementType::AssignAtAddrV:
-			{
-				out << "@" << pStatement->value << std::endl;
-				out << "D=A" << std::endl;
-				out << "@" << pInstance->GetAddress(pStatement->targetName) << std::endl;
-				out << "A=M" << std::endl;
+				LoadAReg(out, pStatement->targetName);
+
 				out << "M=D" << std::endl;
 			}
 			break;
 
 			case StatementType::AddAssignVC: case StatementType::AddAssignVV:
+			case StatementType::SubtractAssignVC: case StatementType::SubtractAssignVV:
+			case StatementType::BitwiseAndAssignVC: case StatementType::BitwiseAndAssignVV:
+			case StatementType::BitwiseOrAssignVC: case StatementType::BitwiseOrAssignVV:
 			{
-				uint16_t Op1Addr = pInstance->GetAddress(pStatement->op1.str);
-				uint16_t Op2Addr = pInstance->GetAddress(pStatement->op2.str);
-				uint16_t targetAddr = pInstance->GetAddress(pStatement->targetName);
-
-				out << "@" << Op1Addr << std::endl;
+				LoadAReg(out, pStatement->op1.str);
 				out << "D=M" << std::endl;
-				out << "@" << targetAddr << std::endl;
+				LoadAReg(out, pStatement->targetName);
 				out << "M=D" << std::endl;
 
-				if (pStatement->type == StatementType::AddAssignVC)
+				if ((pStatement->type == StatementType::AddAssignVC)
+					|| (pStatement->type == StatementType::SubtractAssignVC)
+					|| (pStatement->type == StatementType::BitwiseAndAssignVC)
+					|| (pStatement->type == StatementType::BitwiseOrAssignVC))
 				{
 					out << "@" << pStatement->op2.constant << std::endl;
 					out << "D=A" << std::endl;
 				}
 				else
 				{
-					out << "@" << Op2Addr << std::endl;
+					LoadAReg(out, pStatement->op2.str);
 					out << "D=M" << std::endl;
-
 				}
-				out << "@" << targetAddr << std::endl;
-				out << "M=M+D" << std::endl;
+
+				LoadAReg(out, pStatement->targetName);
+
+				if ((pStatement->type == StatementType::AddAssignVC)
+					|| (pStatement->type == StatementType::AddAssignVV))
+					out << "M=M+D" << std::endl;
+				else if ((pStatement->type == StatementType::SubtractAssignVC)
+					|| (pStatement->type == StatementType::SubtractAssignVV))
+					out << "M=M-D" << std::endl;
+				else if ((pStatement->type == StatementType::BitwiseAndAssignVC)
+					|| (pStatement->type == StatementType::BitwiseAndAssignVV))
+					out << "M=M&D" << std::endl;
+				else
+					out << "M=M|D" << std::endl;
 			}
 			break;
 
 			case StatementType::WhileVC: case StatementType::WhileVV:
 			{
 				int loopLabel = pInstance->GetNextUniqueID();
-				uint16_t op1Addr = pInstance->GetAddress(pStatement->op1.str);
-				uint16_t op2Addr = pInstance->GetAddress(pStatement->op2.str);
 
 				// condition
 				out << "(LOOP" << loopLabel << ")" << std::endl;
@@ -215,10 +278,10 @@ void ASMBlock::GetASM(std::stringstream &out)
 				}
 				else
 				{
-					out << "@" << op2Addr << std::endl;
+					LoadAReg(out, pStatement->op2.str);
 					out << "D=M" << std::endl;
 				}
-				out << "@" << op1Addr << std::endl;
+				LoadAReg(out, pStatement->op1.str);
 				out << "D=D-M" << std::endl;
 				out << "@LOOPEND" << loopLabel << std::endl;
 				Jump(out, pStatement->condOp);
@@ -238,6 +301,7 @@ void ASMBlock::GetASM(std::stringstream &out)
 				initBlock.Assign(pStatement->targetName, 0);
 				initBlock.Assign(temp, 0);
 				whileBlock.AddAssign(pStatement->targetName, pStatement->targetName, pStatement->op1.str);
+				whileBlock.AddAssign(temp, temp, 1);
 				if (pStatement->type == StatementType::MultiplyAssignVC)
 					initBlock.While(temp, pStatement->op2.constant, BooleanOp::LessStrict, &whileBlock);
 				else
@@ -250,8 +314,6 @@ void ASMBlock::GetASM(std::stringstream &out)
 			case StatementType::IfVC: case StatementType::IfVV:
 			{
 				int ifLabel = pInstance->GetNextUniqueID();
-				uint16_t op1Addr = pInstance->GetAddress(pStatement->op1.str);
-				uint16_t op2Addr = pInstance->GetAddress(pStatement->op2.str);
 
 				// condition
 				if (pStatement->type == StatementType::IfVC)
@@ -261,10 +323,10 @@ void ASMBlock::GetASM(std::stringstream &out)
 				}
 				else
 				{
-					out << "@" << op2Addr << std::endl;
+					LoadAReg(out, pStatement->op2.str);
 					out << "D=M" << std::endl;
 				}
-				out << "@" << op1Addr << std::endl;
+				LoadAReg(out, pStatement->op1.str);
 				out << "D=D-M" << std::endl;
 				out << "@IFEND" << ifLabel << std::endl;
 				Jump(out, pStatement->condOp);
@@ -278,10 +340,13 @@ void ASMBlock::GetASM(std::stringstream &out)
 			case StatementType::For:
 			{
 				auto temp = pInstance->GetTemp();
+				auto temp2 = pInstance->GetTemp();
+
 				ASMBlock initBlock, whileBlock;
 				initBlock.Assign(temp, 0);
+				initBlock.While(temp, pStatement->value, BooleanOp::LessStrict, &whileBlock);
+				whileBlock.If(temp2, 0, BooleanOp::Equal, pStatement->block);
 				whileBlock.AddAssign(temp, temp, 1);
-				initBlock.While(temp, pStatement->value, BooleanOp::LessStrict, pStatement->block);
 				initBlock.GetASM(out);
 			}
 			break;
@@ -310,27 +375,6 @@ void ASMBlock::GetASM(std::stringstream &out)
 			break;
         }
     }
-}
-
-uint16_t ASMBlock::LoadASMImage(const ASMImage& image)
-{
-	auto pInstance = AddressManager::GetInstance();
-	auto id = pInstance->GetNextUniqueID();
-	
-	auto unique = std::make_unique<ASMImage>(image.Width(), image.Height());
-
-	mImages[id] = std::move(unique);
-
-	return id;
-}
-
-void ASMBlock::ClearRegion(RECT region)
-{
-	auto statement = std::make_unique<Statement>();
-	statement->type = StatementType::ClearRegion;
-	statement->rt = region;
-
-	mStatements.push_back(std::move(statement));
 }
 
 void ASMBlock::SetBreakPoint(uint16_t breakpoint)
@@ -363,6 +407,27 @@ void ASMBlock::Jump(std::stringstream& out, BooleanOp op)
 	}
 }
 
+inline void ASMBlock::GetPointedVal2AReg(std::stringstream & out, const std::string & varName)
+{
+	auto pInstance = AddressManager::GetInstance();
+	out << "@" << pInstance->GetAddress(varName) << std::endl;
+	out << "A=M" << std::endl;
+}
+
+inline void ASMBlock::GetVal2AReg(std::stringstream & out, const std::string & varName)
+{
+	auto pInstance = AddressManager::GetInstance();
+	out << "@" << pInstance->GetAddress(varName) << std::endl;
+}
+
+inline void ASMBlock::LoadAReg(std::stringstream & out, const std::string & varName)
+{
+	if (varName[0] == '*')
+		GetPointedVal2AReg(out, varName.substr(1));
+	else
+		GetVal2AReg(out, varName);
+}
+
 AddressManager* AddressManager::GetInstance()
 {
 	if (Instance == nullptr)
@@ -372,6 +437,9 @@ AddressManager* AddressManager::GetInstance()
 
 uint16_t AddressManager::GetAddress(const std::string &varName)
 {
+	if (varName[0] == '*')
+		return 0x8000;
+
 	if (mVariables.find(varName) == mVariables.end())
 	{
 		mVariables[varName] = mNextAddress++;
@@ -391,39 +459,4 @@ std::string AddressManager::GetTemp()
 int AddressManager::GetNextUniqueID(void)
 {
 	return mNextUniqueID++;
-}
-
-ASMImage::ASMImage(unsigned width, unsigned height) : mWidth(width), mHeight(height), mImageData(width * height / 16)
-{
-}
-
-void ASMImage::Dot(unsigned x, unsigned y, bool bBlack)
-{
-	int significance = x % 16;
-	char mask = 1 << significance;
-	int index = (mWidth / 16) * y + x / 16;
-	if (bBlack)
-	{
-		mImageData[index] |= mask;
-	}
-	else
-	{
-		mask = ~mask;
-		mImageData[index] &= mask;
-	}
-}
-
-unsigned ASMImage::Width() const
-{
-	return mWidth;
-}
-
-unsigned ASMImage::Height() const
-{
-	return mHeight;
-}
-
-std::vector<uint16_t> ASMImage::Data() const
-{
-	return mImageData;
 }
