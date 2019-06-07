@@ -1,0 +1,22 @@
+@0
+D=A
+@0
+M=D
+(LOOP0)
+@10
+D=A
+@0
+D=D-M
+@LOOPEND0
+D; JLE
+@0
+D=M
+@0
+M=D
+@1
+D=A
+@0
+M=M+D
+@LOOP0
+0; JMP
+(LOOPEND0)
