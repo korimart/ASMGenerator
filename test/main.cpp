@@ -1,4 +1,4 @@
-#include "ASMGenerator.h"
+#include "..//Generator/ASMGenerator.h"
 
 int main(void)
 {
@@ -6,15 +6,18 @@ int main(void)
 	std::stringstream output;
 
 	ASMBlock mainBlock;
-	/*
-		i = 0
-		while (i < 10)
-			i++
-	*/
-	mainBlock.Assign("i", 0);
-	ASMBlock whileBlock;
-	mainBlock.While("i", 10, BooleanOp::LessStrict, &whileBlock);
-	whileBlock.AddAssign("i", "i", 1);
+
+	mainBlock.Init();
+	mainBlock.Assign("x", 10);
+	mainBlock.Assign("y", 10);
+	mainBlock.Assign("width", 5);
+	AREA area;
+	area.x = "x";
+	area.y = "y";
+	area.width = "width";
+	area.height = "width";
+
+	mainBlock.DrawLine(area, false);
 
 	mainBlock.GetASM(output);
 

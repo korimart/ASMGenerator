@@ -1,6 +1,14 @@
 #include "ASMGenerator.h"
 
 AddressManager* AddressManager::Instance = nullptr;
+std::string ASMBlock::NEGONE = std::string();
+
+void ASMBlock::Init()
+{
+	NEGONE = AddressManager::GetInstance()->GetTemp();
+	this->Assign(NEGONE, 0);
+	this->SubtractAssign(NEGONE, NEGONE, 1);
+}
 
 void ASMBlock::Assign(const std::string &varName, uint16_t value)
 {   
@@ -198,6 +206,44 @@ void ASMBlock::Break()
 	mStatements.push_back(std::move(statement));
 }
 
+void ASMBlock::SetJumpPoint(unsigned point)
+{
+	auto statement = std::make_unique<Statement>();
+	statement->type = StatementType::SetJumpPoint;
+	statement->value = point;
+
+	mStatements.push_back(std::move(statement));
+}
+
+void ASMBlock::Jump(unsigned point)
+{
+	auto statement = std::make_unique<Statement>();
+	statement->type = StatementType::Jump;
+	statement->value = point;
+
+	mStatements.push_back(std::move(statement));
+}
+
+void ASMBlock::InvalidateRect(AREA & area, bool bIsWhite)
+{
+	auto statement = std::make_unique<Statement>();
+	statement->type = StatementType::InvalidateRect;
+	statement->area = area;
+	statement->value = bIsWhite;
+
+	mStatements.push_back(std::move(statement));
+}
+
+void ASMBlock::DrawLine(AREA& area, bool bVertical)
+{
+	auto statement = std::make_unique<Statement>();
+	statement->type = StatementType::DrawLine;
+	statement->area = area;
+	statement->value = bVertical;
+
+	mStatements.push_back(std::move(statement));
+}
+
 void ASMBlock::GetASM(std::stringstream &out)
 {
     auto pInstance = AddressManager::GetInstance();
@@ -358,19 +404,118 @@ void ASMBlock::GetASM(std::stringstream &out)
 			}
 			break;
 
-			case StatementType::ClearRegion:
+			case StatementType::InvalidateRect:
 			{
-				RECT rt = pStatement->rt;
-				if (rt.right >= 512 || rt.bottom >= 256)
-					return;
+				/*
+					originalAddr = SCREEN + area.x + area.y * 512
+					height = 0
+
+					while (height < invalidateHeight * 16) // while1
+						width = 0
+						pAddr = originalAddr + height * 32
+						while (width < invalidateWidth) // while2
+							if (bIsWhite)
+								*pAddr = 0
+							else
+								*pAddr = NegOne
+							width++
+							pAddr++
+						height++
+				*/
 				
-				// TODO
+				const auto &area = pStatement->area;
+				std::string originalAddr = pInstance->GetTemp();
+				std::string height = pInstance->GetTemp();
+				std::string width = pInstance->GetTemp();
+				std::string pAddr = pInstance->GetTemp();
+
+				ASMBlock block, while1, while2;
+
+				std::string while1comp = pInstance->GetTemp();
+				block.MultiplyAssign(while1comp, area.height, 16);
 				
-				ASMBlock mainBlock, whileBlock, forBlock;
-				/* while chunkAddr < lastChunkAddr
-						if (chunkAddr % 512 > rt.left && chunkAddr % 512 < rt.right)
-							M[chunkAddr] = 0
-						chunkAddr++ */
+				block.MultiplyAssign(originalAddr, area.y, 512);
+				block.AddAssign(originalAddr, originalAddr, SCREEN);
+				block.AddAssign(originalAddr, originalAddr, area.x);
+				block.Assign(height, 0);
+
+
+				block.While(height, while1comp, BooleanOp::LessStrict, &while1);
+				
+				while1.Assign(width, 0);
+				while1.MultiplyAssign(pAddr, height, 32);
+				while1.AddAssign(pAddr, pAddr, originalAddr);
+				while1.While(width, area.width, BooleanOp::LessStrict, &while2);
+				while1.AddAssign(height, height, 1);
+
+				if (pStatement->value)
+					while2.Assign("*" + pAddr, 0);
+				else
+					while2.Assign("*" + pAddr, NEGONE);
+				while2.AddAssign(width, width, 1);
+				while2.AddAssign(pAddr, pAddr, 1);
+
+				block.GetASM(out);
+			}
+			break;
+
+			case StatementType::DrawLine:
+			{
+				/*
+					pAddr = SCREEN + area.x + area.y * 512
+					if (vertical)
+						width = 0
+						while (width < area.width)
+							*pAddr = NEGONE
+							pAddr++
+							width++
+					else
+						height = 0
+						while (height < area.height * 16)
+							*pAddr |= 1
+							pAddr += 32
+							height++
+				*/
+				const auto& area = pStatement->area;
+				std::string pAddr = pInstance->GetTemp();
+				std::string widthOrHeight = pInstance->GetTemp();
+				
+				ASMBlock block, whileBlock;
+				block.MultiplyAssign(pAddr, area.y, 512);
+				block.AddAssign(pAddr, pAddr, area.x);
+				block.AddAssign(pAddr, pAddr, SCREEN);
+				block.Assign(widthOrHeight, 0);
+				
+				if (pStatement->value)
+				{
+					block.While(widthOrHeight, area.width, BooleanOp::LessStrict, &whileBlock);
+					whileBlock.Assign("*" + pAddr, NEGONE);
+					whileBlock.AddAssign(widthOrHeight, widthOrHeight, 1);
+					whileBlock.AddAssign(pAddr, pAddr, 1);
+				}
+				else
+				{
+					std::string condTemp = pInstance->GetTemp();
+					block.MultiplyAssign(condTemp, area.height, 16);
+					block.While(widthOrHeight, condTemp, BooleanOp::LessStrict, &whileBlock);
+					whileBlock.BitwiseOrAssign("*" + pAddr, "*" + pAddr, 1);
+					whileBlock.AddAssign(pAddr, pAddr, 32);
+					whileBlock.AddAssign(widthOrHeight, widthOrHeight, 1);
+				}
+				block.GetASM(out);
+			}
+			break;
+
+			case StatementType::SetJumpPoint:
+			{
+				out << "(" << "JUMPPOINT" << pStatement->value << ")" << std::endl;
+			}
+			break;
+
+			case StatementType::Jump:
+			{
+				out << "@" << "JUMPPOINT" << pStatement->value << std::endl;
+				out << "0; JMP" << std::endl;
 			}
 			break;
         }

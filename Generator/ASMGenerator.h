@@ -6,6 +6,12 @@
 #include <sstream>
 
 #define ADDRMAX 0x6000
+#define SCREEN 0x4000
+#define KEYBOARD 0x6000
+#define ARROWUP 131
+#define ARROWDOWN 133
+#define ARROWRIGHT 132
+#define ARROWLEFT 130
 
 enum class BooleanOp
 {
@@ -37,15 +43,26 @@ enum class StatementType
     IfVV,
 	For,
 	Break,
-	ClearRegion
+	SetJumpPoint,
+	Jump,
+	InvalidateRect,
+	DrawLine
 };
 
 struct RECT
 {
-	unsigned left;
-	unsigned right;
-	unsigned top;
-	unsigned bottom;
+	std::string left;
+	std::string right;
+	std::string top;
+	std::string bottom;
+};
+
+struct AREA
+{
+	std::string x;
+	std::string y;
+	std::string width;
+	std::string height;
 };
 
 class ASMBlock;
@@ -74,12 +91,14 @@ struct Statement
     ASMBlock *block;
 	std::string targetName;
 	uint16_t addr;
-	RECT rt;
+	AREA area;
 };
 
 class ASMBlock
 {
 public:
+	void Init();
+
     void Assign(const std::string &varName, uint16_t value);
 	void Assign(const std::string &varName, const std::string &op);
     void AddAssign(const std::string &varName, const std::string &op1, uint16_t op2);
@@ -98,9 +117,17 @@ public:
     void If(const std::string &op1, const std::string &op2, BooleanOp operation, ASMBlock *Block);
 	void For(uint16_t numCycles, ASMBlock* Block);
 	void Break();
+	void SetJumpPoint(unsigned point);
+	void Jump(unsigned point);
+
+	void InvalidateRect(AREA & area, bool bIsWhite = true);
+	void DrawLine(AREA& area, bool bVertical = true);
 
     void GetASM(std::stringstream &out);
     
+public:
+	static std::string NEGONE;
+
 private:
 	void SetBreakPoint(uint16_t breakpoint);
 	void Jump(std::stringstream& out, BooleanOp op);

@@ -1,12 +1,5 @@
 #include "ASMGenerator.h"
 
-#define SCREEN 0x4000
-#define KEYBOARD 0x6000
-#define ARROWUP 131
-#define ARROWDOWN 133
-#define ARROWRIGHT 132
-#define ARROWLEFT 130
-
 int main(void)
 {
 	std::fstream file("asm.asm", std::fstream::in | std::fstream::out | std::fstream::trunc);
@@ -20,232 +13,348 @@ int main(void)
 		boxHeight = 1
 
 		// invalidateRect
-		invalidateX = 0
-		invalidateY = 0
-		inavlidateWidth = 0
-		invalidateHeight = 0
+		invX = 16
+		invY = 8
+		invWidth = 1
+		invHeight = 1
 		bInvalidateRect = true
+
+		// general purpose area struct
+		genX = 0
+		genY = 0
+		genWidth = 0
+		genHeight = 0
 
 		// constants
 		const pKey = KEYBOARD
-		const NegOne = -1
 
-		// for sensitive key
+		// other varables
 		lastKey = 0
 		thisKey = 0
-		// timer = 0
+		bTransform = 0
+
+		DrawGridInit(genArea)
 
 		while (true) // gameLoop
 			thisKey = *pKey
 			if (thisKey != lastKey) // keyIf
 				if (thisKey != 0) // keyIf2
 					bInvalidateRect = true
-					invalidateX = x
-					invalidateY = y
-					invalidateWidth = 1
-					invalidateHeight = 1
-					if (thisKey == arrowUp)
-						if (y > 0)
-							y--
-					if (thisKey == arrowDown)
-						if (y < 15)
-							++
-					if (thisKey == arrowRight)
-						if (x < 31)
-							x++
-					if (thisKey == arrowLeft)
-						if (x > 0)
-							x--
+					invX = x
+					invY = y
+					invWidth = boxWidth
+					invHeight = boxHeight
+
+					if (bTransform == false) // keyIfTransformFalse
+						if (thisKey == arrowUp) // keyCond11
+							if (y > 0) // keyCond12
+								y--
+							JUMP 1
+						if (thisKey == arrowDown)
+							if (y < 15)
+								++
+							JUMP 1
+						if (thisKey == arrowRight)
+							if (x < 31)
+								x++
+							JUMP 1
+						if (thisKey == arrowLeft)
+							if (x > 0)
+								x--
+							JUMP 1
+					
+					if (bTransform == true) // keyIfTransformTrue
+						if (thisKey == arrowUp) // keyCond21
+							if (boxHeight > 1) // keyCond22
+								boxHeight--
+							JUMP 1
+						if (thisKey == arrowDown)
+							if (y + boxHeight < 16)
+								boxHeight++
+							JUMP 1
+						if (thisKey == arrowRight)
+							if (x + boxWidth < 32)
+								boxWidth++
+							JUMP 1
+						if (thisKey == arrowLeft)
+							if (boxWidth > 1)
+								boxWidth--
+
+					JUMPPOINT 1
+
+					if (thiskey == 'T') // keyIfTransformToggle
+						if (bTransform == true)
+							bTransform = 0
+							JUMP 0
+						bTransform = 1
+						JUMPPOINT 0
+						
+						
 				lastKey = thisKey
 
 			if (bInvalidateRect) // invaldiateRectIf
-				InvalidateRect(invalidateX, invalidateY, invalidateWidth, invalidteHeight)
-				DrawGrid();
-				DrawBox(x, y);
+				InvalidateRect(invArea)
+				DrawGrid(invArea);
+				InvalidateRect(boxArea); // drawbox
 				bInvalidateRect = false
 
-			// sleep(10)
 	*/
 
 	/*
-		DrawBox(x, y, boxWidth, boxHeight)
+		DrawGridInit()
 		{
-			pDrawBoxTemp = SCREEN + x + y * 512
-			for (16) // drawBoxFor
-				*pDrawBoxTemp = NegOne
-				pDrawBoxTemp += 32
+			genX = 0
+			genY = 0
+			genWidth = 32
+			genHeight = 16
+			for (16) // drawGridFor1
+				DrawLine(area)
+				genY++
+
+			genY = 0
+			for (32) // drawGridFor2
+				DrawLine(area, false)
+				genX++
 		}
 	*/
 
 	/*
-		DrawGrid()
+		DrawGrid(invArea)
 		{
-			// columns
-			screenEnd = 0
-			addr = SCREEN
-			while (screenEnd < 32) // whileBlock3
-				while ( addr < KEYBOARD) // whileBlock4
-					m[addr] |= 1
-					addr += 32
-				screenEnd += 1
-				addr = SCREEN + screenEnd
+			if (bTransform)
+				if (invWidth < boxWidth)
+					JUMP 2
 
-			// rows
-			screenEnd = SCREEN + 32
-			addr = SCREEN
-			while (screenEnd < KEYBOARD) // whileBlock1
-				while (addr < screenEnd) // whileBlock2
-					m[addr] = m[addr] | NegOne
-					addr++
-				addr += 32*15 (480)
-				screenEnd += 32*16 (512)
-		}
-	*/
+				if (invHeight < boxHeight)
+					JUMP 2	
 
-	/*
-		InvalidateRect(invalidateX, invalidateY, invalidateWidth, invalidteHeight)
-		{
-			IRWidth = 0
-			while (IRWidth < invalidateWidth) // IRWhile1
-				IRHeight = 0
-				while (IRHeight < invalidteHeight) // IRWhile2
-					pIRAddr = SCREEN + invalidateX + invalidateY * 512
-					for (16) // IRFor
-						*pIRAddr = 0
-						pIRAddr += 32
-					invalidateX++
-					IRHeight++
-				IRWidth++
-				invalidateY++
-		}
-	*/
+				if (boxWidth < invWidth)
+				{
+					genX = x + boxWidth
+					genY = y
+					genWidth = 1
+					genHeight = boxHeight
+					JUMP 3
+				}
 
-	/*
-		Sleep(clock)
-		{
-			while (timer < clock)
-				timer++
-			timer = 0
+				if (boxHeight < invHeight)
+				{
+					genX = x
+					genY = y + boxHeight
+					genWidth = boxWidth
+					genHeight = 1
+					JUMP 3
+				}
+
+			genX = invX
+			genY = invY
+			genWidth = invWidth
+			genHeight = invHeight
+			
+			JUMPPOINT 3
+
+			DrawGrid__rightBound = invX + invWidth
+			while (genX < DrawGrid__rightBound) // DrawGridWhile1
+				DrawGrid(genArea, false)
+				genX++
+
+			genX = invX
+			
+			DrawGrid__bottomBound = invY + invHeight
+			while (genY < DrawGrid__bottomBound) // DrawGridWhile2
+				DrawGrid(genArea)
+				genY++
+
+			JUMPPOINT 2
 		}
+
 	*/
 	
 	ASMBlock mainBlock;
+	mainBlock.Init();
 	mainBlock.Assign("x", 16);
 	mainBlock.Assign("y", 8);
+	mainBlock.Assign("boxWidth", 1);
+	mainBlock.Assign("boxHeight", 1);
 
-	mainBlock.Assign("invalidateX", 0);
-	mainBlock.Assign("invalidateY", 0);
-	mainBlock.Assign("invalidateWidth", 0);
-	mainBlock.Assign("invalidateHeight", 0);
+	mainBlock.Assign("invX", 16);
+	mainBlock.Assign("invY", 8);
+	mainBlock.Assign("invWidth", 1);
+	mainBlock.Assign("invHeight", 1);
 	mainBlock.Assign("bInvalidateRect", 1);
 
+	mainBlock.Assign("genX", 0);
+	mainBlock.Assign("genY", 0);
+	mainBlock.Assign("genWidth", 32);
+	mainBlock.Assign("genHeight", 16);
+
 	mainBlock.Assign("pKey", KEYBOARD);
-	mainBlock.Assign("NegOne", 0);
-	mainBlock.SubtractAssign("NegOne", "NegOne", 1);
 
 	mainBlock.Assign("lastKey", 0);
 	mainBlock.Assign("thisKey", 0);
-	mainBlock.Assign("timer", 0);
+	mainBlock.Assign("bTransform", 0);
+
+	ASMBlock drawGridFor1, drawGridFor2;
+	mainBlock.For(16, &drawGridFor1);
+	mainBlock.Assign("genY", 0);
+	mainBlock.For(32, &drawGridFor2);
+
+	AREA genArea;
+	genArea.x = "genX";
+	genArea.y = "genY";
+	genArea.width = "genWidth";
+	genArea.height = "genHeight";
+	drawGridFor1.DrawLine(genArea);
+	drawGridFor1.AddAssign("genY", "genY", 1);
+
+	drawGridFor2.DrawLine(genArea, false);
+	drawGridFor2.AddAssign("genX", "genX", 1);
 
 	ASMBlock gameLoop;
 	mainBlock.While("isGameOver", 0, BooleanOp::Equal, &gameLoop);
 
-	ASMBlock keyIf, keyIf2, invalidateRectIf;
+	ASMBlock keyIf, keyIf2, keyIfTransformFalse, keyIfTransformTrue, keyIfTransformToggle, invalidateRectIf;
 	gameLoop.Assign("thisKey", "*pKey");
 	gameLoop.If("thisKey", "lastKey", BooleanOp::NotEqual, &keyIf);
 	gameLoop.If("bInvalidateRect", 1, BooleanOp::Equal, &invalidateRectIf);
-	
-	//ASMBlock timerWhile;
-	//gameLoop.While("timer", 1, BooleanOp::LessStrict, &timerWhile);
-	//timerWhile.AddAssign("timer", "timer", 1);
-	//gameLoop.Assign("timer", 0);
 
 	keyIf.If("thisKey", 0, BooleanOp::NotEqual, &keyIf2);
-
-	keyIf2.Assign("bInvalidateRect", 1);
-	keyIf2.Assign("invalidateX", "x");
-	keyIf2.Assign("invalidateY", "y");
-	keyIf2.Assign("invalidateWidth", 1);
-	keyIf2.Assign("invalidateHeight", 1);
-
-	ASMBlock keyCondUp, keyCondDown, keyCondRight, keyCondLeft;
-	keyIf2.If("thisKey", ARROWRIGHT, BooleanOp::Equal, &keyCondRight);
-	keyIf2.If("thisKey", ARROWLEFT, BooleanOp::Equal, &keyCondLeft);
-	keyIf2.If("thisKey", ARROWUP, BooleanOp::Equal, &keyCondUp);
-	keyIf2.If("thisKey", ARROWDOWN, BooleanOp::Equal, &keyCondDown);
 	keyIf.Assign("lastKey", "thisKey");
 
-	ASMBlock keyCondUp1, keyCondDown1, keyCondRight1, keyCondLeft1;
+	keyIf2.Assign("bInvalidateRect", 1);
+	keyIf2.Assign("invX", "x");
+	keyIf2.Assign("invY", "y");
+	keyIf2.Assign("invWidth", "boxWidth");
+	keyIf2.Assign("invHeight", "boxHeight");
+	keyIf2.If("bTransform", 0, BooleanOp::Equal, &keyIfTransformFalse);
+	keyIf2.If("bTransform", 1, BooleanOp::Equal, &keyIfTransformTrue);
+	keyIf2.If("thisKey", 'T', BooleanOp::Equal, &keyIfTransformToggle);
 
-	keyCondUp.If("y", 0, BooleanOp::GreaterStrict, &keyCondUp1);
-	keyCondDown.If("y", 15, BooleanOp::LessStrict, &keyCondDown1);
-	keyCondRight.If("x", 31, BooleanOp::LessStrict, &keyCondRight1);
-	keyCondLeft.If("x", 0, BooleanOp::GreaterStrict, &keyCondLeft1);
+	ASMBlock keyCondUp11, keyCondDown11, keyCondRight11, keyCondLeft11;
+	keyIfTransformFalse.If("thisKey", ARROWRIGHT, BooleanOp::Equal, &keyCondRight11);
+	keyIfTransformFalse.If("thisKey", ARROWLEFT, BooleanOp::Equal, &keyCondLeft11);
+	keyIfTransformFalse.If("thisKey", ARROWUP, BooleanOp::Equal, &keyCondUp11);
+	keyIfTransformFalse.If("thisKey", ARROWDOWN, BooleanOp::Equal, &keyCondDown11);
 
-	keyCondUp1.SubtractAssign("y", "y", 1);
-	keyCondDown1.AddAssign("y", "y", 1);
-	keyCondRight1.AddAssign("x", "x", 1);
-	keyCondLeft1.SubtractAssign("x", "x", 1);
+	ASMBlock keyCondUp12, keyCondDown12, keyCondRight12, keyCondLeft12;
+
+	keyCondUp11.If("y", 0, BooleanOp::GreaterStrict, &keyCondUp12);
+	keyCondDown11.If("y", 15, BooleanOp::LessStrict, &keyCondDown12);
+	keyCondRight11.If("x", 31, BooleanOp::LessStrict, &keyCondRight12);
+	keyCondLeft11.If("x", 0, BooleanOp::GreaterStrict, &keyCondLeft12);
+
+	keyCondUp12.SubtractAssign("y", "y", 1);
+	keyCondDown12.AddAssign("y", "y", 1);
+	keyCondRight12.AddAssign("x", "x", 1);
+	keyCondLeft12.SubtractAssign("x", "x", 1);
+
+	ASMBlock keyCondUp21, keyCondDown21, keyCondRight21, keyCondLeft21;
+	ASMBlock keyCondUp22, keyCondDown22, keyCondRight22, keyCondLeft22;
+
+	keyIfTransformTrue.If("thisKey", ARROWUP, BooleanOp::Equal, &keyCondUp21);
+	keyIfTransformTrue.If("thisKey", ARROWDOWN, BooleanOp::Equal, &keyCondDown21);
+	keyIfTransformTrue.If("thisKey", ARROWRIGHT, BooleanOp::Equal, &keyCondRight21);
+	keyIfTransformTrue.If("thisKey", ARROWLEFT, BooleanOp::Equal, &keyCondLeft21);
+
+	keyCondUp21.If("boxHeight", 1, BooleanOp::GreaterStrict, &keyCondUp22);
+
+	std::string keyCondDown21Temp = AddressManager::GetInstance()->GetTemp();
+	keyCondDown21.AddAssign(keyCondDown21Temp, "y", "boxHeight");
+	keyCondDown21.If(keyCondDown21Temp, 16, BooleanOp::LessStrict, &keyCondDown22);
+
+	std::string keyCondRight21Temp = AddressManager::GetInstance()->GetTemp();
+	keyCondRight21.AddAssign(keyCondRight21Temp, "x", "boxWidth");
+	keyCondRight21.If(keyCondRight21Temp, 32, BooleanOp::LessStrict, &keyCondRight22);
+
+	keyCondLeft21.If("boxWidth", 1, BooleanOp::GreaterStrict, &keyCondLeft22);
+
+	keyCondUp22.SubtractAssign("boxHeight", "boxHeight", 1);
+	keyCondDown22.AddAssign("boxHeight", "boxHeight", 1);
+	keyCondRight22.AddAssign("boxWidth", "boxWidth", 1);
+	keyCondLeft22.SubtractAssign("boxWidth", "boxWidth", 1);
+
+	ASMBlock ifTransformToggleTrue;
+	keyIfTransformToggle.If("bTransform", 1, BooleanOp::Equal, &ifTransformToggleTrue);
+	keyIfTransformToggle.Assign("bTransform", 1);
+	keyIfTransformToggle.SetJumpPoint(0);
+
+	ifTransformToggleTrue.Assign("bTransform", 0);
+	ifTransformToggleTrue.Jump(0);
+
 
 	ASMBlock whileBlock1, whileBlock2, whileBlock3, whileBlock4, drawBox;
 
 	// InvalidateRect
-	ASMBlock IRWhile1, IRWhile2, IRFor;
-	invalidateRectIf.Assign("IRWidth", 0);
-	invalidateRectIf.While("IRWidth", "invalidateWidth", BooleanOp::LessStrict, &IRWhile1);
-	IRWhile1.Assign("IRHeight", 0);
-	IRWhile1.While("IRHeight", "invalidateHeight", BooleanOp::LessStrict, &IRWhile2);
-	IRWhile1.AddAssign("IRWidth", "IRWidth", 1);
-	IRWhile1.AddAssign("invalidateY", "invalidateY", 1);
-
-	IRWhile2.MultiplyAssign("pIRAddr", "invalidateY", 512);
-	IRWhile2.AddAssign("pIRAddr", "pIRAddr", SCREEN);
-	IRWhile2.AddAssign("pIRAddr", "pIRAddr", "invalidateX");
-	IRWhile2.For(16, &IRFor);
-	IRWhile2.AddAssign("invalidateX", "invalidateX", 1);
-	IRWhile2.AddAssign("IRHeight", "IRHeight", 1);
-
-	IRFor.Assign("*pIRAddr", 0);
-	IRFor.AddAssign("pIRAddr", "pIRAddr", 32);
-
+	AREA invArea;
+	invArea.x = "invX";
+	invArea.y = "invY";
+	invArea.width = "invWidth";
+	invArea.height = "invHeight";
+	invalidateRectIf.InvalidateRect(invArea);
 
 	// DrawGrid
-	invalidateRectIf.Assign("screenEnd", 0);
-	invalidateRectIf.Assign("addr", SCREEN);
-	invalidateRectIf.While("screenEnd", 32, BooleanOp::LessStrict, &whileBlock3);
-	whileBlock3.While("addr", KEYBOARD, BooleanOp::LessStrict, &whileBlock4);
-	whileBlock4.BitwiseOrAssign("*addr", "*addr", 1);
-	whileBlock4.AddAssign("addr", "addr", 32);
-	whileBlock3.AddAssign("screenEnd", "screenEnd", 1);
-	whileBlock3.AddAssign("addr", "screenEnd", SCREEN);
+	ASMBlock DrawGridIfTransform;
+	ASMBlock DrawGridWhile1, DrawGridWhile2;
+	ASMBlock DrawGridIf1, DrawGridIf2, DrawGridIf3;
 
-	invalidateRectIf.Assign("screenEnd", 0x4020);
-	invalidateRectIf.Assign("addr", SCREEN);
-	invalidateRectIf.While("screenEnd", KEYBOARD, BooleanOp::LessStrict, &whileBlock1);
-	whileBlock1.While("addr", "screenEnd", BooleanOp::LessStrict, &whileBlock2);
-	whileBlock2.BitwiseOrAssign("*addr", "*addr", "NegOne");
-	whileBlock2.AddAssign("addr", "addr", 1);
-	whileBlock1.AddAssign("addr", "addr", 480);
-	whileBlock1.AddAssign("screenEnd", "screenEnd", 512);
+	invalidateRectIf.If("bTransform", 1, BooleanOp::Equal, &DrawGridIfTransform);
+
+	DrawGridIfTransform.If("invWidth", "boxWidth", BooleanOp::LessStrict, &DrawGridIf1);
+	DrawGridIf1.Jump(2);
+
+	DrawGridIfTransform.If("invHeight", "boxHeight", BooleanOp::LessStrict, &DrawGridIf1);
+	
+	DrawGridIfTransform.If("boxWidth", "invWidth", BooleanOp::LessStrict, &DrawGridIf2);
+	DrawGridIfTransform.If("boxHeight", "invHeight", BooleanOp::LessStrict, &DrawGridIf3);
+
+	invalidateRectIf.Assign("genX", "invX");
+	invalidateRectIf.Assign("genY", "invY");
+	invalidateRectIf.Assign("genWidth", "invWidth");
+	invalidateRectIf.Assign("genHeight", "invHeight");
+	invalidateRectIf.SetJumpPoint(3);
+
+
+
+	DrawGridIf2.AddAssign("genX", "x", "boxWidth");
+	DrawGridIf2.Assign("genY", "y");
+	DrawGridIf2.Assign("genWidth", 1);
+	DrawGridIf2.Assign("genHeight", "boxHeight");
+	DrawGridIf2.Jump(3);
+
+	DrawGridIf3.Assign("genX", "x");
+	DrawGridIf3.AddAssign("genY", "y", "boxHeight");
+	DrawGridIf3.Assign("genWidth", "boxWidth");
+	DrawGridIf3.Assign("genHeight", 1);
+	DrawGridIf3.Jump(3);
+
+	invalidateRectIf.AddAssign("DrawGrid__rightBound", "invX", "invWidth");
+	invalidateRectIf.While("genX", "DrawGrid__rightBound", BooleanOp::LessStrict, &DrawGridWhile1);
+
+	invalidateRectIf.Assign("genX", "invX");
+
+	invalidateRectIf.AddAssign("DrawGrid__bottomBound", "invY", "invHeight");
+	invalidateRectIf.While("genY", "DarwGrid__bottomBound", BooleanOp::LessStrict, &DrawGridWhile2);
+
+	DrawGridWhile1.DrawLine(genArea, false);
+	DrawGridWhile1.AddAssign("genX", "genX", 1);
+
+	DrawGridWhile2.DrawLine(genArea);
+	DrawGridWhile2.AddAssign("genY", "genY", 1);
+
+	invalidateRectIf.SetJumpPoint(2);
+
 
 	// DrawBox
-	ASMBlock drawBoxFor;
-	invalidateRectIf.MultiplyAssign("pDrawBoxTemp", "y", 512);
-	invalidateRectIf.AddAssign("pDrawBoxTemp", "pDrawBoxTemp", SCREEN);
-	invalidateRectIf.AddAssign("pDrawBoxTemp", "pDrawBoxTemp", "x");
-	invalidateRectIf.For(16, &drawBoxFor);
+	AREA boxArea;
+	boxArea.x = "x";
+	boxArea.y = "y";
+	boxArea.width = "boxWidth";
+	boxArea.height = "boxHeight";
+	invalidateRectIf.InvalidateRect(boxArea, false);
+	
 	invalidateRectIf.Assign("bInvalidateRect", 0);
 
-	drawBoxFor.Assign("*pDrawBoxTemp", "NegOne");
-	drawBoxFor.AddAssign("pDrawBoxTemp", "pDrawBoxTemp", 32);
-
 	mainBlock.GetASM(output);
-
-	//ASMBlock testBlock, testFor;
-	//testBlock.Assign("y", 8);
-	//testBlock.MultiplyAssign("test", "y", 32);
-
-	//testBlock.GetASM(output);
 
 	file << output.str();
 	file.close();
