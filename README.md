@@ -1,7 +1,7 @@
 # ASMGenerator
-nand2tetris.org의 CPU emulator 프로그램에서 쓰이는 기계언어를 감싸는 wrapper functions 이며 서울시립대학교 논리회로및실습 수업의 과제 제출용으로 제작되었습니다. 
+nand2tetris.org의 CPU emulator 프로그램에서 쓰이는 기계언어를 감싸는 wrapper class 이며 서울시립대학교 논리회로및실습 수업의 과제 제출용으로 제작되었습니다. 
 
-Generator 프로젝트 내부에는 본 wrapper functions의 header file 및 cpp file 이외에도 과제제출용 asm.asm 파일 및 그 제작에 사용된 main.cpp 파일이 동봉되어 있으니 참고하시기 바랍니다.
+Generator 프로젝트 내부에는 본 wrapper class의 header file 및 cpp file 이외에도 과제제출용 asm.asm 파일 및 그 제작에 사용된 main.cpp 파일이 동봉되어 있으니 참고하시기 바랍니다.
 
 # Usage
 먼저 ASMGenerator.h를 include한 후 ASMBlock 클래스의 객체를 생성하고 초기화합니다.
