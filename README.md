@@ -1,5 +1,5 @@
 # ASMGenerator
-nand2tetris.org에서 제공하는 CPU simulator 프로그램에서 쓰이는 기계언어를 감싸는 wrapper functions 이며 서울시립대학교 논리회로및실습 수업의 과제 제출용으로 제작되었습니다. 
+nand2tetris.org CPU emulator 프로그램에서 쓰이는 기계언어를 감싸는 wrapper functions 이며 서울시립대학교 논리회로및실습 수업의 과제 제출용으로 제작되었습니다. 
 
 Generator 프로젝트 내부에는 본 wrapper functions의 header file 및 cpp file 이외에도 과제제출용 asm.asm 파일 및 그 제작에 사용된 main.cpp 파일이 동봉되어 있으니 참고하시기 바랍니다.
 
@@ -103,7 +103,7 @@ GetTemp()의 return value는 "__tempKorimart" + 숫자이므로 이것을 변수
 앞서 설명한 몇몇 Statement는 이름 없는 변수를 사용하고 inline으로 결과물에 들어가므로 코드에 많이 등장하면 많은 일회성 변수를 만들어 낼 수 있으며 RAM의 낭비가 될 수 있습니다. 하지만 경험상 ROM이 아닌 RAM의 용량은 넉넉하므로 신경쓰지 않으셔도 됩니다.
 
 ## Convenience Functions
-편리한 그래픽 함수들입니다. nand2tetris CPU simulator 는 512x256의 스크린을 제공합니다. 성능상의 이유로 다음 함수들은 이를 16x16의 정사각형으로 나눈 32x16 좌표계를 사용합니다(픽셀단위가 아닌 정사각형 단위의 값을 넣어야함; width = 1은 16픽셀을 의미). 좌측 상단의 좌표는 (0, 0) 이며 낮아질수록 y의 값이 증가합니다.
+편리한 그래픽 함수들입니다. nand2tetris CPU emulator 는 512x256의 스크린을 제공합니다. 성능상의 이유로 다음 함수들은 이를 16x16의 정사각형으로 나눈 32x16 좌표계를 사용합니다(픽셀단위가 아닌 정사각형 단위의 값을 넣어야함; width = 1은 16픽셀을 의미). 좌측 상단의 좌표는 (0, 0) 이며 낮아질수록 y의 값이 증가합니다.
 
 주의 : 모든 함수는 inline 이므로 다음 함수들을 많이 쓸 수록 결과물의 길이가 길어져 ROM을 많이 잡아먹음
 
