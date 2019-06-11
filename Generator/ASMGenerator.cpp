@@ -244,6 +244,25 @@ void ASMBlock::DrawLine(AREA& area, bool bVertical)
 	mStatements.push_back(std::move(statement));
 }
 
+void ASMBlock::DrawGrid(AREA& area)
+{
+	auto statement = std::make_unique<Statement>();
+	statement->type = StatementType::DrawGrid;
+	statement->area = area;
+
+	mStatements.push_back(std::move(statement));
+}
+
+void ASMBlock::DrawImage(const std::string& fileName, RECT rt)
+{
+	auto statement = std::make_unique<Statement>();
+	statement->type = StatementType::DrawImage;
+	statement->targetName = fileName;
+	statement->rt = rt;
+
+	mStatements.push_back(std::move(statement));
+}
+
 void ASMBlock::GetASM(std::stringstream &out)
 {
     auto pInstance = AddressManager::GetInstance();
@@ -518,8 +537,75 @@ void ASMBlock::GetASM(std::stringstream &out)
 				out << "0; JMP" << std::endl;
 			}
 			break;
-        }
-    }
+
+			case StatementType::DrawGrid:
+			{
+				/*
+					AREA areaArg =
+					{
+						x,
+						y,
+						width,
+						height
+					}
+					x = area.x
+					y = area.y
+					width = area.width
+					height area.height
+
+					while (y < area.y + area.height)
+						DrawLine(areaArg)
+						y++
+
+					y = area.y
+					
+					while (x < area.x + area.width)
+						DrawLine(areaArg)
+						x++
+				*/
+				AREA areaArg;
+				ASMBlock block, while1, while2;
+				const auto& area = pStatement->area;
+				std::string x = pInstance->GetTemp();
+				std::string y = pInstance->GetTemp();
+				std::string width = pInstance->GetTemp();
+				std::string height = pInstance->GetTemp();
+				std::string whileCond1 = pInstance->GetTemp();
+				std::string whileCond2 = pInstance->GetTemp();
+
+				areaArg.x = x;
+				areaArg.y = y;
+				areaArg.width = width;
+				areaArg.height = height;
+
+				block.Assign(x, area.x);
+				block.Assign(y, area.y);
+				block.Assign(width, area.width);
+				block.Assign(height, area.height);
+				block.AddAssign(whileCond1, area.y, area.height);
+				block.AddAssign(whileCond2, area.x, area.width);
+
+				block.While(y, whileCond1, BooleanOp::LessStrict, &while1);
+				block.Assign(y, area.y);
+				block.While(x, whileCond2, BooleanOp::LessStrict, &while2);
+
+				while1.DrawLine(areaArg);
+				while1.AddAssign(y, y, 1);
+
+				while2.DrawLine(areaArg, false);
+				while2.AddAssign(x, x, 1);
+
+				block.GetASM(out);
+			}
+			break;
+
+			case StatementType::DrawImage:
+			{
+				DrawImage(out, pStatement.get());
+			}
+			break;
+		}
+	}
 }
 
 void ASMBlock::SetBreakPoint(uint16_t breakpoint)
@@ -531,46 +617,102 @@ void ASMBlock::Jump(std::stringstream& out, BooleanOp op)
 {
 	switch (op)
 	{
-		case BooleanOp::NotEqual:
-			out << "D; JEQ" << std::endl;
-			break;
-		case BooleanOp::Equal:
-			out << "D; JNE" << std::endl;
-			break;
-		case BooleanOp::LessStrict:
-			out << "D; JLE" << std::endl;
-			break;
-		case BooleanOp::LessEqual:
-			out << "D; JLT" << std::endl;
-			break;
-		case BooleanOp::GreaterStrict:
-			out << "D; JGE" << std::endl;
-			break;
-		case BooleanOp::GreaterEqual:
-			out << "D; JGT" << std::endl;
-			break;
+	case BooleanOp::NotEqual:
+		out << "D; JEQ" << std::endl;
+		break;
+	case BooleanOp::Equal:
+		out << "D; JNE" << std::endl;
+		break;
+	case BooleanOp::LessStrict:
+		out << "D; JLE" << std::endl;
+		break;
+	case BooleanOp::LessEqual:
+		out << "D; JLT" << std::endl;
+		break;
+	case BooleanOp::GreaterStrict:
+		out << "D; JGE" << std::endl;
+		break;
+	case BooleanOp::GreaterEqual:
+		out << "D; JGT" << std::endl;
+		break;
 	}
 }
 
-inline void ASMBlock::GetPointedVal2AReg(std::stringstream & out, const std::string & varName)
+inline void ASMBlock::GetPointedVal2AReg(std::stringstream& out, const std::string& varName)
 {
 	auto pInstance = AddressManager::GetInstance();
 	out << "@" << pInstance->GetAddress(varName) << std::endl;
 	out << "A=M" << std::endl;
 }
 
-inline void ASMBlock::GetVal2AReg(std::stringstream & out, const std::string & varName)
+inline void ASMBlock::GetVal2AReg(std::stringstream& out, const std::string& varName)
 {
 	auto pInstance = AddressManager::GetInstance();
 	out << "@" << pInstance->GetAddress(varName) << std::endl;
 }
 
-inline void ASMBlock::LoadAReg(std::stringstream & out, const std::string & varName)
+inline void ASMBlock::LoadAReg(std::stringstream& out, const std::string& varName)
 {
 	if (varName[0] == '*')
 		GetPointedVal2AReg(out, varName.substr(1));
 	else
 		GetVal2AReg(out, varName);
+}
+
+void ASMBlock::DrawImage(std::stringstream& out, const Statement* pStatement)
+{
+	std::ifstream file(pStatement->targetName);
+	if (!file.is_open())
+	{
+		std::cout << "unable to open file" << std::endl;
+		int a;
+		std::cin >> a;
+		exit(1);
+	}
+
+	const auto& rt = pStatement->rt;
+	if (rt.x < 0 || rt.x > 31 || rt.y < 0 || rt.y > 15)
+	{
+		std::cout << "image size not acceptable" << std::endl;
+		int a;
+		std::cin >> a;
+		exit(1);
+	}
+
+	int16_t word;
+	uint16_t addr;
+	for (int j = 0; j < rt.height * 16; j++) {
+		addr = SCREEN + rt.x + 32 * j;
+		for (int i = 0; i < rt.width; ++i)
+		{
+			uint16_t temp = 0;
+			for (int k = 0; k < 16; ++k)
+			{
+				char c;
+				file >> c;
+				if (c == '1')
+					temp += pow(2, k);
+			}
+			word = (int16_t)temp;
+
+			if (word > 0)
+			{
+				out << "@" << word << std::endl;
+				out << "D=A" << std::endl;
+			}
+			else
+			{
+				word *= -1;
+				out << "@" << word << std::endl;
+				out << "D=A" << std::endl;
+				out << "D=-D" << std::endl;
+			}
+
+			out << "@" << addr << std::endl;
+			out << "M=D" << std::endl;
+			addr++;
+		}
+	}
 }
 
 AddressManager* AddressManager::GetInstance()

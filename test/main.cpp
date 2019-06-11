@@ -2,23 +2,19 @@
 
 int main(void)
 {
-	std::fstream file("asm.asm", std::fstream::in | std::fstream::out | std::fstream::trunc);
+	std::fstream file("test.asm", std::fstream::in | std::fstream::out | std::fstream::trunc);
 	std::stringstream output;
 
 	ASMBlock mainBlock;
 
+	RECT rt;
+	rt.x = 0;
+	rt.y = 0;
+	rt.width = 2;
+	rt.height = 2;
+
 	mainBlock.Init();
-	mainBlock.Assign("x", 10);
-	mainBlock.Assign("y", 10);
-	mainBlock.Assign("width", 5);
-	AREA area;
-	area.x = "x";
-	area.y = "y";
-	area.width = "width";
-	area.height = "width";
-
-	mainBlock.DrawLine(area, false);
-
+	mainBlock.DrawImage("sample_image.txt", rt);
 	mainBlock.GetASM(output);
 
 	file << output.str();

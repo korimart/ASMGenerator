@@ -12,18 +12,11 @@ int main(void)
 		boxWidth = 1
 		boxHeight = 1
 
-		// invalidateRect
-		invX = 16
-		invY = 8
-		invWidth = 1
-		invHeight = 1
-		bInvalidateRect = true
-
 		// general purpose area struct
 		genX = 0
 		genY = 0
-		genWidth = 0
-		genHeight = 0
+		genWidth = 32
+		genHeight = 16
 
 		// constants
 		const pKey = KEYBOARD
@@ -32,60 +25,50 @@ int main(void)
 		lastKey = 0
 		thisKey = 0
 		bTransform = 0
+		bInvalidateRect = false
 
-		DrawGridInit(genArea)
+		DrawGrid(genArea)
+		InvalidateRect(boxArea)
 
 		while (true) // gameLoop
 			thisKey = *pKey
 			if (thisKey != lastKey) // keyIf
-				if (thisKey != 0) // keyIf2
+				if (thisKey != 0) // keyIf2; this prevents from drawing when you let go of key
 					bInvalidateRect = true
-					invX = x
-					invY = y
-					invWidth = boxWidth
-					invHeight = boxHeight
 
 					if (bTransform == false) // keyIfTransformFalse
 						if (thisKey == arrowUp) // keyCond11
 							if (y > 0) // keyCond12
 								y--
-							JUMP 1
 						if (thisKey == arrowDown)
-							if (y < 15)
-								++
-							JUMP 1
+							if (y + boxHeight < 15)
+								y++
 						if (thisKey == arrowRight)
-							if (x < 31)
+							if (x + boxWidth < 31)
 								x++
-							JUMP 1
 						if (thisKey == arrowLeft)
 							if (x > 0)
 								x--
-							JUMP 1
 					
 					if (bTransform == true) // keyIfTransformTrue
 						if (thisKey == arrowUp) // keyCond21
 							if (boxHeight > 1) // keyCond22
 								boxHeight--
-							JUMP 1
 						if (thisKey == arrowDown)
 							if (y + boxHeight < 16)
 								boxHeight++
-							JUMP 1
 						if (thisKey == arrowRight)
 							if (x + boxWidth < 32)
 								boxWidth++
-							JUMP 1
 						if (thisKey == arrowLeft)
 							if (boxWidth > 1)
 								boxWidth--
-
-					JUMPPOINT 1
 
 					if (thiskey == 'T') // keyIfTransformToggle
 						if (bTransform == true)
 							bTransform = 0
 							JUMP 0
+						// else
 						bTransform = 1
 						JUMPPOINT 0
 						
@@ -93,77 +76,109 @@ int main(void)
 				lastKey = thisKey
 
 			if (bInvalidateRect) // invaldiateRectIf
-				InvalidateRect(invArea)
-				DrawGrid(invArea);
-				InvalidateRect(boxArea); // drawbox
+				Draw()
 				bInvalidateRect = false
 
 	*/
 
 	/*
-		DrawGridInit()
-		{
-			genX = 0
-			genY = 0
-			genWidth = 32
-			genHeight = 16
-			for (16) // drawGridFor1
-				DrawLine(area)
-				genY++
-
-			genY = 0
-			for (32) // drawGridFor2
-				DrawLine(area, false)
-				genX++
-		}
-	*/
-
-	/*
-		DrawGrid(invArea)
+		Draw()
 		{
 			if (bTransform)
-				if (invWidth < boxWidth)
-					JUMP 2
+				// 가로로 커짐
+				if (thisKey == ARROWRIGHT)
+					genX = x + boxWidth - 1
+					genY = y
+					genWidth = 1
+					genHeight = boxHeight
+					InvalidateRect(genArea, false)
+					JUMP 2 // return
 
-				if (invHeight < boxHeight)
-					JUMP 2	
+				// 세로로 커짐
+				if (thisKey == ARROWDOWN)
+					genX = x
+					genY = y + boxHeight - 1
+					genWidth = boxWidth
+					genHeight = 1
+					InvalidateRect(genArea, false)
+					JUMP 2	// return
 
-				if (boxWidth < invWidth)
+				// 가로로 작아짐
+				if (thisKey == ARROWLEFT)
 				{
 					genX = x + boxWidth
 					genY = y
 					genWidth = 1
 					genHeight = boxHeight
-					JUMP 3
+					InvalidateRect(genArea)
+					DrawGrid(genArea)
+					JUMP 2 // return
 				}
 
-				if (boxHeight < invHeight)
+				// 세로로 작아짐
+				if (thisKey == ARROWUP)
 				{
 					genX = x
 					genY = y + boxHeight
 					genWidth = boxWidth
 					genHeight = 1
-					JUMP 3
+					InvalidateRect(genArea)
+					DrawGrid(genArea)
+					JUMP 2 // return
 				}
 
-			genX = invX
-			genY = invY
-			genWidth = invWidth
-			genHeight = invHeight
-			
-			JUMPPOINT 3
-
-			DrawGrid__rightBound = invX + invWidth
-			while (genX < DrawGrid__rightBound) // DrawGridWhile1
-				DrawGrid(genArea, false)
-				genX++
-
-			genX = invX
-			
-			DrawGrid__bottomBound = invY + invHeight
-			while (genY < DrawGrid__bottomBound) // DrawGridWhile2
+			// if translation
+			// 오른쪽으로 이동
+			if (thisKey == ARROWRIGHT)
+				genX = x - 1
+				genY = y
+				genWidth = 1
+				genHeight = boxHeight
+				InvalidateRect(genArea)
 				DrawGrid(genArea)
-				genY++
+
+				genX = genX + boxWidth
+				InvalidateRect(genArea, false))
+				JUMP 2 // return
+
+			// 왼쪽으로 이동
+			if (thisKey == ARROWLEFT)
+				genX = x
+				genY = y
+				genWidth = 1
+				genHeight = boxHeight
+				InvalidateRect(genArea, false)
+
+				genX = x + boxWidth
+				InvalidateRect(genArea))
+				DrawGrid(genArea)
+				JUMP 2 // return
+			
+			// 아래로 이동
+			if (thisKey == ARROWDOWN)
+				genX = x
+				genY = y - 1
+				genWidth = boxWidth
+				genHeight = 1
+				InvalidateRect(genArea)
+				DrawGrid(genARea)
+
+				genY = genY + boxHeight
+				InvalidateRect(genArea, false)
+				JUMP 2 // return
+
+			// 위로이동
+			if (thisKey == ARROWUP)
+				genX = x
+				genY = y
+				genWidth = boxWidth
+				genHeight = 1
+				InvalidateRect(genArea, false)
+
+				genY = y + boxHeight
+				InvalidateRect(genArea, true)
+				DrawGrid(genArea)
+				JUMP 2 // return
 
 			JUMPPOINT 2
 		}
@@ -177,12 +192,6 @@ int main(void)
 	mainBlock.Assign("boxWidth", 1);
 	mainBlock.Assign("boxHeight", 1);
 
-	mainBlock.Assign("invX", 16);
-	mainBlock.Assign("invY", 8);
-	mainBlock.Assign("invWidth", 1);
-	mainBlock.Assign("invHeight", 1);
-	mainBlock.Assign("bInvalidateRect", 1);
-
 	mainBlock.Assign("genX", 0);
 	mainBlock.Assign("genY", 0);
 	mainBlock.Assign("genWidth", 32);
@@ -193,22 +202,22 @@ int main(void)
 	mainBlock.Assign("lastKey", 0);
 	mainBlock.Assign("thisKey", 0);
 	mainBlock.Assign("bTransform", 0);
-
-	ASMBlock drawGridFor1, drawGridFor2;
-	mainBlock.For(16, &drawGridFor1);
-	mainBlock.Assign("genY", 0);
-	mainBlock.For(32, &drawGridFor2);
+	mainBlock.Assign("bInvalidateRect", 0);
 
 	AREA genArea;
 	genArea.x = "genX";
 	genArea.y = "genY";
 	genArea.width = "genWidth";
 	genArea.height = "genHeight";
-	drawGridFor1.DrawLine(genArea);
-	drawGridFor1.AddAssign("genY", "genY", 1);
 
-	drawGridFor2.DrawLine(genArea, false);
-	drawGridFor2.AddAssign("genX", "genX", 1);
+	mainBlock.DrawGrid(genArea);
+
+	AREA boxArea;
+	boxArea.x = "x";
+	boxArea.y = "y";
+	boxArea.width = "boxWidth";
+	boxArea.height = "boxHeight";
+	mainBlock.InvalidateRect(boxArea, false);
 
 	ASMBlock gameLoop;
 	mainBlock.While("isGameOver", 0, BooleanOp::Equal, &gameLoop);
@@ -222,10 +231,6 @@ int main(void)
 	keyIf.Assign("lastKey", "thisKey");
 
 	keyIf2.Assign("bInvalidateRect", 1);
-	keyIf2.Assign("invX", "x");
-	keyIf2.Assign("invY", "y");
-	keyIf2.Assign("invWidth", "boxWidth");
-	keyIf2.Assign("invHeight", "boxHeight");
 	keyIf2.If("bTransform", 0, BooleanOp::Equal, &keyIfTransformFalse);
 	keyIf2.If("bTransform", 1, BooleanOp::Equal, &keyIfTransformTrue);
 	keyIf2.If("thisKey", 'T', BooleanOp::Equal, &keyIfTransformToggle);
@@ -239,8 +244,15 @@ int main(void)
 	ASMBlock keyCondUp12, keyCondDown12, keyCondRight12, keyCondLeft12;
 
 	keyCondUp11.If("y", 0, BooleanOp::GreaterStrict, &keyCondUp12);
-	keyCondDown11.If("y", 15, BooleanOp::LessStrict, &keyCondDown12);
-	keyCondRight11.If("x", 31, BooleanOp::LessStrict, &keyCondRight12);
+
+	std::string keyCondDown11Temp = AddressManager::GetInstance()->GetTemp();
+	keyCondDown11.AddAssign(keyCondDown11Temp, "y", "boxHeight");
+	keyCondDown11.If(keyCondDown11Temp, 16, BooleanOp::LessStrict, &keyCondDown12);
+
+	std::string keyCondRight11Temp = AddressManager::GetInstance()->GetTemp();
+	keyCondRight11.AddAssign(keyCondRight11Temp, "x", "boxWidth");
+	keyCondRight11.If(keyCondRight11Temp, 32, BooleanOp::LessStrict, &keyCondRight12);
+
 	keyCondLeft11.If("x", 0, BooleanOp::GreaterStrict, &keyCondLeft12);
 
 	keyCondUp12.SubtractAssign("y", "y", 1);
@@ -281,78 +293,97 @@ int main(void)
 	ifTransformToggleTrue.Assign("bTransform", 0);
 	ifTransformToggleTrue.Jump(0);
 
-
-	ASMBlock whileBlock1, whileBlock2, whileBlock3, whileBlock4, drawBox;
-
-	// InvalidateRect
-	AREA invArea;
-	invArea.x = "invX";
-	invArea.y = "invY";
-	invArea.width = "invWidth";
-	invArea.height = "invHeight";
-	invalidateRectIf.InvalidateRect(invArea);
-
-	// DrawGrid
-	ASMBlock DrawGridIfTransform;
-	ASMBlock DrawGridWhile1, DrawGridWhile2;
-	ASMBlock DrawGridIf1, DrawGridIf2, DrawGridIf3;
-
-	invalidateRectIf.If("bTransform", 1, BooleanOp::Equal, &DrawGridIfTransform);
-
-	DrawGridIfTransform.If("invWidth", "boxWidth", BooleanOp::LessStrict, &DrawGridIf1);
-	DrawGridIf1.Jump(2);
-
-	DrawGridIfTransform.If("invHeight", "boxHeight", BooleanOp::LessStrict, &DrawGridIf1);
+	/*------------------Draw--------------------*/
+	ASMBlock drawTransform;
+	invalidateRectIf.If("bTransform", 1, BooleanOp::Equal, &drawTransform);
 	
-	DrawGridIfTransform.If("boxWidth", "invWidth", BooleanOp::LessStrict, &DrawGridIf2);
-	DrawGridIfTransform.If("boxHeight", "invHeight", BooleanOp::LessStrict, &DrawGridIf3);
+	ASMBlock dtfRightIf, dtfLeftIf, dtfUpIf, dtfDownIf;
+	drawTransform.If("thisKey", ARROWRIGHT, BooleanOp::Equal, &dtfRightIf);
+	drawTransform.If("thisKey", ARROWDOWN, BooleanOp::Equal, &dtfDownIf);
+	drawTransform.If("thisKey", ARROWLEFT, BooleanOp::Equal, &dtfLeftIf);
+	drawTransform.If("thisKey", ARROWUP, BooleanOp::Equal, &dtfUpIf);
 
-	invalidateRectIf.Assign("genX", "invX");
-	invalidateRectIf.Assign("genY", "invY");
-	invalidateRectIf.Assign("genWidth", "invWidth");
-	invalidateRectIf.Assign("genHeight", "invHeight");
-	invalidateRectIf.SetJumpPoint(3);
+	dtfRightIf.AddAssign("genX", "x", "boxWidth");
+	dtfRightIf.SubtractAssign("genX", "genX", 1);
+	dtfRightIf.Assign("genY", "y");
+	dtfRightIf.Assign("genWidth", 1);
+	dtfRightIf.Assign("genHeight", "boxHeight");
+	dtfRightIf.InvalidateRect(genArea, false);
+	dtfRightIf.Jump(2);
 
+	dtfDownIf.AddAssign("genY", "y", "boxHeight");
+	dtfDownIf.SubtractAssign("genY", "genY", 1);
+	dtfDownIf.Assign("genX", "x");
+	dtfDownIf.Assign("genWidth", "boxWidth");
+	dtfDownIf.Assign("genHeight", 1);
+	dtfDownIf.InvalidateRect(genArea, false);
+	dtfDownIf.Jump(2);
 
+	dtfLeftIf.AddAssign("genX", "x", "boxWidth");
+	dtfLeftIf.Assign("genY", "y");
+	dtfLeftIf.Assign("genWidth", 1);
+	dtfLeftIf.Assign("genHeight", "boxHeight");
+	dtfLeftIf.InvalidateRect(genArea);
+	dtfLeftIf.DrawGrid(genArea);
+	dtfLeftIf.Jump(2);
 
-	DrawGridIf2.AddAssign("genX", "x", "boxWidth");
-	DrawGridIf2.Assign("genY", "y");
-	DrawGridIf2.Assign("genWidth", 1);
-	DrawGridIf2.Assign("genHeight", "boxHeight");
-	DrawGridIf2.Jump(3);
+	dtfUpIf.Assign("genX", "x");
+	dtfUpIf.AddAssign("genY", "y", "boxHeight");
+	dtfUpIf.Assign("genWidth", "boxWidth");
+	dtfUpIf.Assign("genHeight", 1);
+	dtfUpIf.InvalidateRect(genArea);
+	dtfUpIf.DrawGrid(genArea);
+	dtfUpIf.Jump(2);
 
-	DrawGridIf3.Assign("genX", "x");
-	DrawGridIf3.AddAssign("genY", "y", "boxHeight");
-	DrawGridIf3.Assign("genWidth", "boxWidth");
-	DrawGridIf3.Assign("genHeight", 1);
-	DrawGridIf3.Jump(3);
+	ASMBlock dtlRightIf, dtlLeftIf, dtlDownIf, dtlUpIf;
+	invalidateRectIf.If("thisKey", ARROWRIGHT, BooleanOp::Equal, &dtlRightIf);
+	invalidateRectIf.If("thisKey", ARROWDOWN, BooleanOp::Equal, &dtlDownIf);
+	invalidateRectIf.If("thisKey", ARROWLEFT, BooleanOp::Equal, &dtlLeftIf);
+	invalidateRectIf.If("thisKey", ARROWUP, BooleanOp::Equal, &dtlUpIf);
 
-	invalidateRectIf.AddAssign("DrawGrid__rightBound", "invX", "invWidth");
-	invalidateRectIf.While("genX", "DrawGrid__rightBound", BooleanOp::LessStrict, &DrawGridWhile1);
+	dtlRightIf.SubtractAssign("genX", "x", 1);
+	dtlRightIf.Assign("genY", "y");
+	dtlRightIf.Assign("genWidth", 1);
+	dtlRightIf.Assign("genHeight", "boxHeight");
+	dtlRightIf.InvalidateRect(genArea);
+	dtlRightIf.DrawGrid(genArea);
+	dtlRightIf.AddAssign("genX", "genX", "boxWidth");
+	dtlRightIf.InvalidateRect(genArea, false);
+	dtlRightIf.Jump(2);
+	
+	dtlLeftIf.Assign("genX", "x");
+	dtlLeftIf.Assign("genY", "y");
+	dtlLeftIf.Assign("genWidth", 1);
+	dtlLeftIf.Assign("genHeight", "boxHeight");
+	dtlLeftIf.InvalidateRect(genArea, false);
+	dtlLeftIf.AddAssign("genX", "x", "boxWidth");
+	dtlLeftIf.InvalidateRect(genArea);
+	dtlLeftIf.DrawGrid(genArea);
+	dtlLeftIf.Jump(2);
 
-	invalidateRectIf.Assign("genX", "invX");
+	dtlDownIf.Assign("genX", "x");
+	dtlDownIf.SubtractAssign("genY", "y", 1);
+	dtlDownIf.Assign("genWidth", "boxWidth");
+	dtlDownIf.Assign("genHeight", 1);
+	dtlDownIf.InvalidateRect(genArea);
+	dtlDownIf.DrawGrid(genArea);
+	dtlDownIf.AddAssign("genY", "genY", "boxHeight");
+	dtlDownIf.InvalidateRect(genArea, false);
+	dtlDownIf.Jump(2);
 
-	invalidateRectIf.AddAssign("DrawGrid__bottomBound", "invY", "invHeight");
-	invalidateRectIf.While("genY", "DarwGrid__bottomBound", BooleanOp::LessStrict, &DrawGridWhile2);
-
-	DrawGridWhile1.DrawLine(genArea, false);
-	DrawGridWhile1.AddAssign("genX", "genX", 1);
-
-	DrawGridWhile2.DrawLine(genArea);
-	DrawGridWhile2.AddAssign("genY", "genY", 1);
+	dtlUpIf.Assign("genX", "x");
+	dtlUpIf.Assign("genY", "y");
+	dtlUpIf.Assign("genWidth", "boxWidth");
+	dtlUpIf.Assign("genHeight", 1);
+	dtlUpIf.InvalidateRect(genArea, false);
+	dtlUpIf.AddAssign("genY", "y", "boxHeight");
+	dtlUpIf.InvalidateRect(genArea, true);
+	dtlUpIf.DrawGrid(genArea);
+	dtlUpIf.Jump(2);
 
 	invalidateRectIf.SetJumpPoint(2);
-
-
-	// DrawBox
-	AREA boxArea;
-	boxArea.x = "x";
-	boxArea.y = "y";
-	boxArea.width = "boxWidth";
-	boxArea.height = "boxHeight";
-	invalidateRectIf.InvalidateRect(boxArea, false);
-	
 	invalidateRectIf.Assign("bInvalidateRect", 0);
+	/*------------------DrawEnd-----------------*/
 
 	mainBlock.GetASM(output);
 

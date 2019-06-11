@@ -4,6 +4,8 @@
 #include <vector>
 #include <unordered_map>
 #include <sstream>
+#include <iostream>
+#include <cmath>
 
 #define ADDRMAX 0x6000
 #define SCREEN 0x4000
@@ -46,15 +48,17 @@ enum class StatementType
 	SetJumpPoint,
 	Jump,
 	InvalidateRect,
-	DrawLine
+	DrawLine,
+	DrawGrid,
+	DrawImage
 };
 
 struct RECT
 {
-	std::string left;
-	std::string right;
-	std::string top;
-	std::string bottom;
+	uint16_t x;
+	uint16_t y;
+	uint16_t width;
+	uint16_t height;
 };
 
 struct AREA
@@ -92,6 +96,7 @@ struct Statement
 	std::string targetName;
 	uint16_t addr;
 	AREA area;
+	RECT rt;
 };
 
 class ASMBlock
@@ -122,6 +127,8 @@ public:
 
 	void InvalidateRect(AREA & area, bool bIsWhite = true);
 	void DrawLine(AREA& area, bool bVertical = true);
+	void DrawGrid(AREA& area);
+	void DrawImage(const std::string& fileName, RECT rt);
 
     void GetASM(std::stringstream &out);
     
@@ -134,6 +141,7 @@ private:
 	inline void GetPointedVal2AReg(std::stringstream &out, const std::string &varName);
 	inline void GetVal2AReg(std::stringstream &out, const std::string &varName);
 	inline void LoadAReg(std::stringstream &out, const std::string &varName);
+	static void DrawImage(std::stringstream& out, const Statement *pStatement);
 
     std::vector<std::unique_ptr<Statement>> mStatements;
 	uint16_t mBreakPoint = 0;
