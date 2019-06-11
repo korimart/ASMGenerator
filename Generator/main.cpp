@@ -6,6 +6,65 @@ int main(void)
 	std::stringstream output;
 
 	/*
+		// constants
+		const pKey = KEYBOARD
+		lastKey = 0
+
+		JUMPPOINT 100 // 100: logo, 101: howToUse, 102: game
+
+		genX = 0
+		genY = 0
+		genWidth = 32
+		genHeight = 16
+		InvalidateRect(genArea)
+
+		RECT rt;
+		rt.x = 10
+		rt.y = 0
+		rt.width = 12
+		rt.height = 9
+		DrawImage("logo.txt", rt)
+
+		rt.x = 6
+		rt.y = 10
+		rt.width = 20
+		rt.height = 3
+		DrawImage("name.txt", rt)
+
+		while (true)
+			if (*pKey != lastKey)
+				lastKey = *pKey
+				if (*pKey != 0)
+					JUMP 101
+
+		JUMPPOINT 101 // how to use
+
+		genX = 0
+		genY = 0
+		genWidth = 32
+		genHeight = 16
+		InvalidateRect(genArea)
+
+		rt.x = 12;
+		rt.y = 0;
+		rt.width = 8;
+		rt.height = 4;
+		DrawImage("help.txt", rt);
+
+		rt.x = 4;
+		rt.y = 7;
+		rt.width = 25;
+		rt.height = 5;
+		DrawImage("helpText.txt", rt);
+
+		while (true)
+			if (*pKey != lastKey)
+				lastKey = *pKey
+				if (*pKey != 0)
+					JUMP 102
+
+		JUMPPOINT 102 // game
+
 		// box
 		x = 16
 		y = 8
@@ -18,11 +77,7 @@ int main(void)
 		genWidth = 32
 		genHeight = 16
 
-		// constants
-		const pKey = KEYBOARD
-
 		// other varables
-		lastKey = 0
 		thisKey = 0
 		bTransform = 0
 		bInvalidateRect = false
@@ -33,6 +88,7 @@ int main(void)
 		while (true) // gameLoop
 			thisKey = *pKey
 			if (thisKey != lastKey) // keyIf
+				lastKey = thisKey
 				if (thisKey != 0) // keyIf2; this prevents from drawing when you let go of key
 					bInvalidateRect = true
 
@@ -71,9 +127,14 @@ int main(void)
 						// else
 						bTransform = 1
 						JUMPPOINT 0
+
+					if (thisKey == ESC)
+						JUMP 100
+
+					if (thisKey == 'H')
+						JUMP 101			
 						
 						
-				lastKey = thisKey
 
 			if (bInvalidateRect) // invaldiateRectIf
 				Draw()
@@ -184,9 +245,83 @@ int main(void)
 		}
 
 	*/
+	AREA genArea;
+	genArea.x = "genX";
+	genArea.y = "genY";
+	genArea.width = "genWidth";
+	genArea.height = "genHeight";
+
+	AREA boxArea;
+	boxArea.x = "x";
+	boxArea.y = "y";
+	boxArea.width = "boxWidth";
+	boxArea.height = "boxHeight";
+
+	RECT rt;
+
+	/*----------- start of assembly code -----------*/
 	
 	ASMBlock mainBlock;
 	mainBlock.Init();
+	mainBlock.Assign("pKey", KEYBOARD);
+	mainBlock.Assign("lastKey", 0);
+	
+	mainBlock.SetJumpPoint(100);
+
+	mainBlock.Assign("genX", 0);
+	mainBlock.Assign("genY", 0);
+	mainBlock.Assign("genWidth", 32);
+	mainBlock.Assign("genHeight", 16);
+	mainBlock.InvalidateRect(genArea);
+
+	rt.x = 10;
+	rt.y = 0;
+	rt.width = 12;
+	rt.height = 9;
+	mainBlock.DrawImage("logo.txt", rt);
+
+	rt.x = 6;
+	rt.y = 10;
+	rt.width = 20;
+	rt.height = 3;
+	mainBlock.DrawImage("name.txt", rt);
+
+	ASMBlock logoWhile, logoSensitiveIf, logoIf;
+	mainBlock.While("logoWhile", 0, BooleanOp::Equal, &logoWhile);
+	logoWhile.If("*pKey", "lastKey", BooleanOp::NotEqual, &logoSensitiveIf);
+	logoSensitiveIf.Assign("lastKey", "*pKey");
+	logoSensitiveIf.If("*pKey", 0, BooleanOp::NotEqual, &logoIf);
+	logoIf.Jump(101);
+
+	mainBlock.SetJumpPoint(101);
+
+	mainBlock.Assign("genX", 0);
+	mainBlock.Assign("genY", 0);
+	mainBlock.Assign("genWidth", 32);
+	mainBlock.Assign("genHeight", 16);
+	mainBlock.InvalidateRect(genArea);
+
+	rt.x = 12;
+	rt.y = 0;
+	rt.width = 8;
+	rt.height = 4;
+	mainBlock.DrawImage("help.txt", rt);
+
+	rt.x = 4;
+	rt.y = 7;
+	rt.width = 25;
+	rt.height = 5;
+	mainBlock.DrawImage("helpText.txt", rt);
+
+	ASMBlock helpWhile, helpIf, helpSensitiveIf;
+	mainBlock.While("helpWhile", 0, BooleanOp::Equal, &helpWhile);
+	helpWhile.If("*pKey", "lastKey", BooleanOp::NotEqual, &helpSensitiveIf);
+	helpSensitiveIf.Assign("lastKey", "*pKey");
+	helpSensitiveIf.If("*pKey", 0, BooleanOp::NotEqual, &helpIf);
+	helpIf.Jump(102);
+
+	mainBlock.SetJumpPoint(102);
+
 	mainBlock.Assign("x", 16);
 	mainBlock.Assign("y", 8);
 	mainBlock.Assign("boxWidth", 1);
@@ -196,50 +331,44 @@ int main(void)
 	mainBlock.Assign("genY", 0);
 	mainBlock.Assign("genWidth", 32);
 	mainBlock.Assign("genHeight", 16);
+	mainBlock.InvalidateRect(genArea);
 
-	mainBlock.Assign("pKey", KEYBOARD);
-
-	mainBlock.Assign("lastKey", 0);
 	mainBlock.Assign("thisKey", 0);
 	mainBlock.Assign("bTransform", 0);
 	mainBlock.Assign("bInvalidateRect", 0);
 
-	AREA genArea;
-	genArea.x = "genX";
-	genArea.y = "genY";
-	genArea.width = "genWidth";
-	genArea.height = "genHeight";
-
 	mainBlock.DrawGrid(genArea);
 
-	AREA boxArea;
-	boxArea.x = "x";
-	boxArea.y = "y";
-	boxArea.width = "boxWidth";
-	boxArea.height = "boxHeight";
 	mainBlock.InvalidateRect(boxArea, false);
 
 	ASMBlock gameLoop;
 	mainBlock.While("isGameOver", 0, BooleanOp::Equal, &gameLoop);
 
 	ASMBlock keyIf, keyIf2, keyIfTransformFalse, keyIfTransformTrue, keyIfTransformToggle, invalidateRectIf;
+	ASMBlock keyIfESC, keyIfH;
 	gameLoop.Assign("thisKey", "*pKey");
 	gameLoop.If("thisKey", "lastKey", BooleanOp::NotEqual, &keyIf);
 	gameLoop.If("bInvalidateRect", 1, BooleanOp::Equal, &invalidateRectIf);
 
-	keyIf.If("thisKey", 0, BooleanOp::NotEqual, &keyIf2);
 	keyIf.Assign("lastKey", "thisKey");
+	keyIf.If("thisKey", 0, BooleanOp::NotEqual, &keyIf2);
 
 	keyIf2.Assign("bInvalidateRect", 1);
 	keyIf2.If("bTransform", 0, BooleanOp::Equal, &keyIfTransformFalse);
 	keyIf2.If("bTransform", 1, BooleanOp::Equal, &keyIfTransformTrue);
 	keyIf2.If("thisKey", 'T', BooleanOp::Equal, &keyIfTransformToggle);
+	keyIf2.If("thisKey", ESC, BooleanOp::Equal, &keyIfESC);
+	keyIf2.If("thisKey", 'H', BooleanOp::Equal, &keyIfH);
+
 
 	ASMBlock keyCondUp11, keyCondDown11, keyCondRight11, keyCondLeft11;
 	keyIfTransformFalse.If("thisKey", ARROWRIGHT, BooleanOp::Equal, &keyCondRight11);
 	keyIfTransformFalse.If("thisKey", ARROWLEFT, BooleanOp::Equal, &keyCondLeft11);
 	keyIfTransformFalse.If("thisKey", ARROWUP, BooleanOp::Equal, &keyCondUp11);
 	keyIfTransformFalse.If("thisKey", ARROWDOWN, BooleanOp::Equal, &keyCondDown11);
+
+	keyIfESC.Jump(100);
+	keyIfH.Jump(101);
 
 	ASMBlock keyCondUp12, keyCondDown12, keyCondRight12, keyCondLeft12;
 

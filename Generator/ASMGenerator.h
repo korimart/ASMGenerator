@@ -14,6 +14,8 @@
 #define ARROWDOWN 133
 #define ARROWRIGHT 132
 #define ARROWLEFT 130
+#define ESC 140
+#define F1 141
 
 enum class BooleanOp
 {
