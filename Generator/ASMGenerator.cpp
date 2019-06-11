@@ -682,7 +682,7 @@ void ASMBlock::DrawImage(std::stringstream& out, const Statement* pStatement)
 	int16_t word;
 	uint16_t addr;
 	for (int j = 0; j < rt.height * 16; j++) {
-		addr = SCREEN + rt.x + 32 * j;
+		addr = SCREEN + rt.x + 512 * rt.y + 32 * j;
 		for (int i = 0; i < rt.width; ++i)
 		{
 			uint16_t temp = 0;

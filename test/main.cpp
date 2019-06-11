@@ -8,8 +8,8 @@ int main(void)
 	ASMBlock mainBlock;
 
 	RECT rt;
-	rt.x = 0;
-	rt.y = 0;
+	rt.x = 15;
+	rt.y = 8;
 	rt.width = 2;
 	rt.height = 2;
 
