@@ -52,10 +52,16 @@ int main(void)
 		DrawImage("help.txt", rt);
 
 		rt.x = 4;
-		rt.y = 7;
+		rt.y = 6;
 		rt.width = 25;
 		rt.height = 5;
 		DrawImage("helpText.txt", rt);
+
+		rt.x = 8;
+		rt.y = 12;
+		rt.width = 13;
+		rt.height = 2;
+		DrawImage("helpStart.txt", rt);
 
 		while (true)
 			if (*pKey != lastKey)
@@ -90,35 +96,49 @@ int main(void)
 			if (thisKey != lastKey) // keyIf
 				lastKey = thisKey
 				if (thisKey != 0) // keyIf2; this prevents from drawing when you let go of key
-					bInvalidateRect = true
 
 					if (bTransform == false) // keyIfTransformFalse
 						if (thisKey == arrowUp) // keyCond11
 							if (y > 0) // keyCond12
 								y--
+								bInvalidateRect = true
+
 						if (thisKey == arrowDown)
 							if (y + boxHeight < 15)
 								y++
+								bInvalidateRect = true
+
 						if (thisKey == arrowRight)
 							if (x + boxWidth < 31)
 								x++
+								bInvalidateRect = true
+
 						if (thisKey == arrowLeft)
 							if (x > 0)
 								x--
+								bInvalidateRect = true
+
 					
 					if (bTransform == true) // keyIfTransformTrue
 						if (thisKey == arrowUp) // keyCond21
 							if (boxHeight > 1) // keyCond22
 								boxHeight--
+								bInvalidateRect = true
+
 						if (thisKey == arrowDown)
 							if (y + boxHeight < 16)
 								boxHeight++
+								bInvalidateRect = true
+
 						if (thisKey == arrowRight)
 							if (x + boxWidth < 32)
 								boxWidth++
+								bInvalidateRect = true
+
 						if (thisKey == arrowLeft)
 							if (boxWidth > 1)
 								boxWidth--
+								bInvalidateRect = true
 
 					if (thiskey == 'T') // keyIfTransformToggle
 						if (bTransform == true)
@@ -301,17 +321,23 @@ int main(void)
 	mainBlock.Assign("genHeight", 16);
 	mainBlock.InvalidateRect(genArea);
 
-	rt.x = 12;
+	rt.x = 4;
 	rt.y = 0;
 	rt.width = 8;
 	rt.height = 4;
 	mainBlock.DrawImage("help.txt", rt);
 
 	rt.x = 4;
-	rt.y = 7;
+	rt.y = 6;
 	rt.width = 25;
 	rt.height = 5;
 	mainBlock.DrawImage("helpText.txt", rt);
+
+	rt.x = 5;
+	rt.y = 12;
+	rt.width = 13;
+	rt.height = 2;
+	mainBlock.DrawImage("helpStart.txt", rt);
 
 	ASMBlock helpWhile, helpIf, helpSensitiveIf;
 	mainBlock.While("helpWhile", 0, BooleanOp::Equal, &helpWhile);
@@ -353,7 +379,6 @@ int main(void)
 	keyIf.Assign("lastKey", "thisKey");
 	keyIf.If("thisKey", 0, BooleanOp::NotEqual, &keyIf2);
 
-	keyIf2.Assign("bInvalidateRect", 1);
 	keyIf2.If("bTransform", 0, BooleanOp::Equal, &keyIfTransformFalse);
 	keyIf2.If("bTransform", 1, BooleanOp::Equal, &keyIfTransformTrue);
 	keyIf2.If("thisKey", 'T', BooleanOp::Equal, &keyIfTransformToggle);
@@ -389,6 +414,11 @@ int main(void)
 	keyCondRight12.AddAssign("x", "x", 1);
 	keyCondLeft12.SubtractAssign("x", "x", 1);
 
+	keyCondUp12.Assign("bInvalidateRect", 1);
+	keyCondDown12.Assign("bInvalidateRect", 1);
+	keyCondRight12.Assign("bInvalidateRect", 1);
+	keyCondLeft12.Assign("bInvalidateRect", 1);
+
 	ASMBlock keyCondUp21, keyCondDown21, keyCondRight21, keyCondLeft21;
 	ASMBlock keyCondUp22, keyCondDown22, keyCondRight22, keyCondLeft22;
 
@@ -413,6 +443,11 @@ int main(void)
 	keyCondDown22.AddAssign("boxHeight", "boxHeight", 1);
 	keyCondRight22.AddAssign("boxWidth", "boxWidth", 1);
 	keyCondLeft22.SubtractAssign("boxWidth", "boxWidth", 1);
+
+	keyCondUp22.Assign("bInvalidateRect", 1);
+	keyCondDown22.Assign("bInvalidateRect", 1);
+	keyCondRight22.Assign("bInvalidateRect", 1);
+	keyCondLeft22.Assign("bInvalidateRect", 1);
 
 	ASMBlock ifTransformToggleTrue;
 	keyIfTransformToggle.If("bTransform", 1, BooleanOp::Equal, &ifTransformToggleTrue);

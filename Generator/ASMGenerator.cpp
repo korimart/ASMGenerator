@@ -679,7 +679,6 @@ void ASMBlock::DrawImage(std::stringstream& out, const Statement* pStatement)
 		exit(1);
 	}
 
-	int16_t word;
 	uint16_t addr;
 	for (int j = 0; j < rt.height * 16; j++) {
 		addr = SCREEN + rt.x + 512 * rt.y + 32 * j;
@@ -691,21 +690,19 @@ void ASMBlock::DrawImage(std::stringstream& out, const Statement* pStatement)
 				char c;
 				file >> c;
 				if (c == '1')
-					temp += pow(2, k);
+					temp |= (1 << k);
 			}
-			word = (int16_t)temp;
 
-			if (word > 0)
+			if (temp < 0x8000)
 			{
-				out << "@" << word << std::endl;
+				out << "@" << temp << std::endl;
 				out << "D=A" << std::endl;
 			}
 			else
 			{
-				word *= -1;
-				out << "@" << word << std::endl;
-				out << "D=A" << std::endl;
-				out << "D=-D" << std::endl;
+				temp = ~temp;
+				out << "@" << temp << std::endl;
+				out << "D=!A" << std::endl;
 			}
 
 			out << "@" << addr << std::endl;
