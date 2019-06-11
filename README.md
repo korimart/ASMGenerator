@@ -132,7 +132,7 @@ AREA 구조체에 채워진 변수의 값으로 화면에 격자를 그립니다
 		uint16_t height;
 	};
     void ASMBlock::DrawImage(const std::string& fileName, RECT rt);
-fileName 위치의 .txt를 찾아 RECT 구조체에 채워진 상수의 값에 해당하는 화면의 위치에 이미지를 그립니다. 위치는 컴파일타임에 제공되므로 고정되며 함수는 inline으로 결과물에 들어가므로 이미지의 화면상 위치를 변경하고 싶을 때에는 부득이하게 결과물의 길이가 두배가 되는 비용을 치뤄야 합니다. 이는 stack 및 subroutine function call 구현을 회피하기 위한 조치입니다.
+fileName 위치의 .txt를 찾아 RECT 구조체에 채워진 상수의 값에 해당하는 화면의 위치에 이미지를 그립니다. 이미지의 크기는 16의 배수이어야 합니다(그래야 width와 height에 정수가 들어감). 위치는 컴파일타임에 제공되므로 고정되며 함수는 inline으로 결과물에 들어가므로 이미지의 화면상 위치를 변경하고 싶을 때에는 부득이하게 결과물의 길이가 두배가 되는 비용을 치뤄야 합니다. 이는 stack 및 subroutine function call 구현을 회피하기 위한 조치입니다.
 
 이미지를 같은 위치에 다른 상황에 다시 그리고 싶을 때에는 함수는 한번만 제공하고 각기 다른 상황에서 ASMBlock::Jump를 이용하여 흡사 subroutine과 같은 구현을 하는것을 추천합니다. ROM의 용량이 한정적이기 때문에 ASMBlock::DrawImage()를 적당한 크기의 이미지로 서너번만 호출해도 ROM이 꽉차게됩니다.
 
