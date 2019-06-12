@@ -102,6 +102,15 @@ GetTemp()의 return value는 "__tempKorimart" + 숫자이므로 이것을 변수
 
 앞서 설명한 몇몇 Statement는 이름 없는 변수를 사용하고 inline으로 결과물에 들어가므로 코드에 많이 등장하면 많은 일회성 변수를 만들어 낼 수 있으며 RAM의 낭비가 될 수 있습니다. 하지만 경험상 ROM이 아닌 RAM의 용량은 넉넉하므로 신경쓰지 않으셔도 됩니다.
 
+마지막으로 가장 바깥의 ASMBlock에서 GetASM()을 호출하여 결과물을 출력합니다.
+
+    std::stringstream output;
+    mainBlock.GetASM(output);
+Standard Library를 사용해 파일로 출력할 수 있습니다.
+
+    std::ifstream file("asm.asm", std::fstream::in | std::fstream::out | std::fstream::truc);
+    file << output.str();
+
 ## Convenience Functions
 편리한 그래픽 함수들입니다. nand2tetris CPU emulator 는 512x256의 스크린을 제공합니다. 성능상의 이유로 다음 함수들은 이를 16x16의 정사각형으로 나눈 32x16 좌표계를 사용합니다(픽셀단위가 아닌 정사각형 단위의 값을 넣어야함; width = 1은 16픽셀을 의미). 좌측 상단의 좌표는 (0, 0) 이며 낮아질수록 y의 값이 증가합니다.
 
