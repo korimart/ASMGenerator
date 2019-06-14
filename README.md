@@ -73,9 +73,9 @@ while (2 < 3) 과 같은 바보짓을 방지하기 위하여 While과 If의 첫�
 	ASMBlock mainBlock, whileBlock, ifBlock;
 	mainBlock.Assign("i", 0);
 	mainBlock.While("i", 100, BooleanOp::LessStrict, &whileBlock);
-	whileBlock.If("i", 77, BooleanOp::Equal, &ifBlock);
-	ifBlock.Break();
-	whileBlock.AddAssign("i", "i", 1);
+		whileBlock.If("i", 77, BooleanOp::Equal, &ifBlock);
+			ifBlock.Break();
+		whileBlock.AddAssign("i", "i", 1);
 순서대로 작성해도 되고 아무렇게나 작성해도 됩니다. 다만 같은 ASMBlock 내의 Statements 들은 순서대로 위치해야 합니다.
 
     ASMBlock mainBlock, whileBlock, ifBlock;
